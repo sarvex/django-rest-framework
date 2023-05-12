@@ -26,9 +26,7 @@ class APIRequestFactory(DjangoRequestFactory):
 
     def __init__(self, enforce_csrf_checks=False, **defaults):
         self.enforce_csrf_checks = enforce_csrf_checks
-        self.renderer_classes = {}
-        for cls in self.renderer_classes_list:
-            self.renderer_classes[cls.format] = cls
+        self.renderer_classes = {cls.format: cls for cls in self.renderer_classes_list}
         super(APIRequestFactory, self).__init__(**defaults)
 
     def _encode_data(self, data, format=None, content_type=None):
@@ -55,7 +53,9 @@ class APIRequestFactory(DjangoRequestFactory):
                 "Set TEST_REQUEST_RENDERER_CLASSES to enable "
                 "extra request formats.".format(
                     format,
-                    ', '.join(["'" + fmt + "'" for fmt in self.renderer_classes.keys()])
+                    ', '.join(
+                        [f"'{fmt}'" for fmt in self.renderer_classes.keys()]
+                    ),
                 )
             )
 
@@ -82,7 +82,7 @@ class APIRequestFactory(DjangoRequestFactory):
         # See #1461
         if not data and '?' in path:
             r['QUERY_STRING'] = path.split('?')[1]
-        r.update(extra)
+        r |= extra
         return self.generic('GET', path, **r)
 
     def post(self, path, data=None, format=None, content_type=None, **extra):
@@ -153,7 +153,7 @@ class APIClient(APIRequestFactory, DjangoClient):
 
     def request(self, **kwargs):
         # Ensure that any credentials set get added to every request.
-        kwargs.update(self._credentials)
+        kwargs |= self._credentials
         return super(APIClient, self).request(**kwargs)
 
     def get(self, path, data=None, follow=False, **extra):

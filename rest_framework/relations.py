@@ -69,7 +69,7 @@ class RelatedField(Field):
             return CustomManyRelatedField(*args, **kwargs)
         """
         list_kwargs = {'child_relation': cls(*args, **kwargs)}
-        for key in kwargs.keys():
+        for key in kwargs:
             if key in MANY_RELATION_KWARGS:
                 list_kwargs[key] = kwargs[key]
         return ManyRelatedField(**list_kwargs)
@@ -215,7 +215,7 @@ class HyperlinkedRelatedField(RelatedField):
             data = urlparse.urlparse(data).path
             prefix = get_script_prefix()
             if data.startswith(prefix):
-                data = '/' + data[len(prefix):]
+                data = f'/{data[len(prefix):]}'
 
         try:
             match = resolve(data)
@@ -346,9 +346,10 @@ class ManyRelatedField(Field):
         # lists in HTML forms.
         if html.is_html_input(dictionary):
             # Don't return [] if the update is partial
-            if self.field_name not in dictionary:
-                if getattr(self.root, 'partial', False):
-                    return empty
+            if self.field_name not in dictionary and getattr(
+                self.root, 'partial', False
+            ):
+                return empty
             return dictionary.getlist(self.field_name)
 
         return dictionary.get(self.field_name, empty)
@@ -381,10 +382,12 @@ class ManyRelatedField(Field):
             (item, self.child_relation.to_representation(item))
             for item in iterable
         ]
-        return OrderedDict([
-            (
-                six.text_type(item_representation),
-                six.text_type(item) + ' - ' + six.text_type(item_representation)
-            )
-            for item, item_representation in items_and_representations
-        ])
+        return OrderedDict(
+            [
+                (
+                    six.text_type(item_representation),
+                    f'{six.text_type(item)} - {six.text_type(item_representation)}',
+                )
+                for item, item_representation in items_and_representations
+            ]
+        )

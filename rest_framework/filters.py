@@ -46,9 +46,9 @@ class DjangoFilterBackend(BaseFilterBackend):
         if filter_class:
             filter_model = filter_class.Meta.model
 
-            assert issubclass(queryset.model, filter_model), \
-                'FilterSet model %s does not match queryset model %s' % \
-                (filter_model, queryset.model)
+            assert issubclass(
+                queryset.model, filter_model
+            ), f'FilterSet model {filter_model} does not match queryset model {queryset.model}'
 
             return filter_class
 
@@ -62,9 +62,7 @@ class DjangoFilterBackend(BaseFilterBackend):
         return None
 
     def filter_queryset(self, request, queryset, view):
-        filter_class = self.get_filter_class(view, queryset)
-
-        if filter_class:
+        if filter_class := self.get_filter_class(view, queryset):
             return filter_class(request.query_params, queryset=queryset).qs
 
         return queryset
@@ -84,13 +82,13 @@ class SearchFilter(BaseFilterBackend):
 
     def construct_search(self, field_name):
         if field_name.startswith('^'):
-            return "%s__istartswith" % field_name[1:]
+            return f"{field_name[1:]}__istartswith"
         elif field_name.startswith('='):
-            return "%s__iexact" % field_name[1:]
+            return f"{field_name[1:]}__iexact"
         elif field_name.startswith('@'):
-            return "%s__search" % field_name[1:]
+            return f"{field_name[1:]}__search"
         else:
-            return "%s__icontains" % field_name
+            return f"{field_name}__icontains"
 
     def filter_queryset(self, request, queryset, view):
         search_fields = getattr(view, 'search_fields', None)
@@ -122,11 +120,9 @@ class OrderingFilter(BaseFilterBackend):
         the `ordering_param` value on the OrderingFilter or by
         specifying an `ORDERING_PARAM` value in the API settings.
         """
-        params = request.query_params.get(self.ordering_param)
-        if params:
+        if params := request.query_params.get(self.ordering_param):
             fields = [param.strip() for param in params.split(',')]
-            ordering = self.remove_invalid_fields(queryset, fields, view)
-            if ordering:
+            if ordering := self.remove_invalid_fields(queryset, fields, view):
                 return ordering
 
         # No ordering was included, or all the ordering fields were invalid
@@ -134,9 +130,7 @@ class OrderingFilter(BaseFilterBackend):
 
     def get_default_ordering(self, view):
         ordering = getattr(view, 'ordering', None)
-        if isinstance(ordering, six.string_types):
-            return (ordering,)
-        return ordering
+        return (ordering, ) if isinstance(ordering, six.string_types) else ordering
 
     def remove_invalid_fields(self, queryset, fields, view):
         valid_fields = getattr(view, 'ordering_fields', self.ordering_fields)
@@ -161,9 +155,7 @@ class OrderingFilter(BaseFilterBackend):
         return [term for term in fields if term.lstrip('-') in valid_fields]
 
     def filter_queryset(self, request, queryset, view):
-        ordering = self.get_ordering(request, queryset, view)
-
-        if ordering:
+        if ordering := self.get_ordering(request, queryset, view):
             return queryset.order_by(*ordering)
 
         return queryset

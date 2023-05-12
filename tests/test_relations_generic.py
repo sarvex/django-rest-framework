@@ -30,7 +30,7 @@ class Bookmark(models.Model):
     tags = GenericRelation(Tag)
 
     def __str__(self):
-        return 'Bookmark: %s' % self.url
+        return f'Bookmark: {self.url}'
 
 
 @python_2_unicode_compatible
@@ -42,7 +42,7 @@ class Note(models.Model):
     tags = GenericRelation(Tag)
 
     def __str__(self):
-        return 'Note: %s' % self.text
+        return f'Note: {self.text}'
 
 
 class TestGenericRelations(TestCase):

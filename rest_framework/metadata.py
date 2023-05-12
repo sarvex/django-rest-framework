@@ -60,8 +60,7 @@ class SimpleMetadata(BaseMetadata):
         metadata['renders'] = [renderer.media_type for renderer in view.renderer_classes]
         metadata['parses'] = [parser.media_type for parser in view.parser_classes]
         if hasattr(view, 'get_serializer'):
-            actions = self.determine_actions(request, view)
-            if actions:
+            if actions := self.determine_actions(request, view):
                 metadata['actions'] = actions
         return metadata
 
@@ -71,7 +70,7 @@ class SimpleMetadata(BaseMetadata):
         the fields that are accepted for 'PUT' and 'POST' methods.
         """
         actions = {}
-        for method in set(['PUT', 'POST']) & set(view.allowed_methods):
+        for method in {'PUT', 'POST'} & set(view.allowed_methods):
             view.request = clone_request(request, method)
             try:
                 # Test global permissions

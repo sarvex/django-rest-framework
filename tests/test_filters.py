@@ -145,7 +145,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the decimal filter works.
         search_decimal = Decimal('2.25')
-        request = factory.get('/', {'decimal': '%s' % search_decimal})
+        request = factory.get('/', {'decimal': f'{search_decimal}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if Decimal(f['decimal']) == search_decimal]
@@ -153,7 +153,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the date filter works.
         search_date = datetime.date(2012, 9, 22)
-        request = factory.get('/', {'date': '%s' % search_date})  # search_date str: '2012-09-22'
+        request = factory.get('/', {'date': f'{search_date}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if parse_date(f['date']) == search_date]
@@ -168,7 +168,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the decimal filter works.
         search_decimal = Decimal('2.25')
-        request = factory.get('/', {'decimal': '%s' % search_decimal})
+        request = factory.get('/', {'decimal': f'{search_decimal}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if Decimal(f['decimal']) == search_decimal]
@@ -201,7 +201,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the decimal filter set with 'lt' in the filter class works.
         search_decimal = Decimal('4.25')
-        request = factory.get('/', {'decimal': '%s' % search_decimal})
+        request = factory.get('/', {'decimal': f'{search_decimal}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if Decimal(f['decimal']) < search_decimal]
@@ -209,7 +209,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the date filter set with 'gt' in the filter class works.
         search_date = datetime.date(2012, 10, 2)
-        request = factory.get('/', {'date': '%s' % search_date})  # search_date str: '2012-10-02'
+        request = factory.get('/', {'date': f'{search_date}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if parse_date(f['date']) > search_date]
@@ -217,7 +217,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
 
         # Tests that the text filter set with 'icontains' in the filter class works.
         search_text = 'ff'
-        request = factory.get('/', {'text': '%s' % search_text})
+        request = factory.get('/', {'text': f'{search_text}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if search_text in f['text'].lower()]
@@ -226,10 +226,9 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
         # Tests that multiple filters works.
         search_decimal = Decimal('5.25')
         search_date = datetime.date(2012, 10, 2)
-        request = factory.get('/', {
-            'decimal': '%s' % (search_decimal,),
-            'date': '%s' % (search_date,)
-        })
+        request = factory.get(
+            '/', {'decimal': f'{search_decimal}', 'date': f'{search_date}'}
+        )
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [f for f in self.data if parse_date(f['date']) > search_date and
@@ -266,7 +265,7 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
         view = FilterFieldsRootView.as_view()
 
         search_integer = 10
-        request = factory.get('/', {'integer': '%s' % search_integer})
+        request = factory.get('/', {'integer': f'{search_integer}'})
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

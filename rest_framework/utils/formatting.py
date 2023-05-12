@@ -28,11 +28,11 @@ def dedent(content):
     unindented text on the initial line.
     """
     content = force_text(content)
-    whitespace_counts = [len(line) - len(line.lstrip(' '))
-                         for line in content.splitlines()[1:] if line.lstrip()]
-
-    # unindent the content if needed
-    if whitespace_counts:
+    if whitespace_counts := [
+        len(line) - len(line.lstrip(' '))
+        for line in content.splitlines()[1:]
+        if line.lstrip()
+    ]:
         whitespace_pattern = '^' + (' ' * min(whitespace_counts))
         content = re.sub(re.compile(whitespace_pattern, re.MULTILINE), '', content)
 
@@ -57,5 +57,5 @@ def markup_description(description):
         description = apply_markdown(description)
     else:
         description = escape(description).replace('\n', '<br />')
-        description = '<p>' + description + '</p>'
+        description = f'<p>{description}</p>'
     return mark_safe(description)

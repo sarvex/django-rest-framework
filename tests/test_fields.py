@@ -985,22 +985,22 @@ class TestChoiceFieldWithListChoices(FieldValues):
     field = serializers.ChoiceField(choices=('poor', 'medium', 'good'))
 
 
+
+
 class TestMultipleChoiceField(FieldValues):
     """
     Valid and invalid values for `MultipleChoiceField`.
     """
     valid_inputs = {
         (): set(),
-        ('aircon',): set(['aircon']),
-        ('aircon', 'manual'): set(['aircon', 'manual']),
+        ('aircon',): {'aircon'},
+        ('aircon', 'manual'): {'aircon', 'manual'},
     }
     invalid_inputs = {
         'abc': ['Expected a list of items but got type "str".'],
         ('aircon', 'incorrect'): ['"incorrect" is not a valid choice.']
     }
-    outputs = [
-        (['aircon', 'manual'], set(['aircon', 'manual']))
-    ]
+    outputs = [(['aircon', 'manual'], {'aircon', 'manual'})]
     field = serializers.MultipleChoiceField(
         choices=[
             ('aircon', 'AirCon'),
@@ -1170,7 +1170,7 @@ class TestUnvalidatedDictField(FieldValues):
 
 class MockRequest:
     def build_absolute_uri(self, value):
-        return 'http://example.com' + value
+        return f'http://example.com{value}'
 
 
 class TestFileFieldContext:

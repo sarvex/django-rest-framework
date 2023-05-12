@@ -60,17 +60,17 @@ class BasicAuthTests(TestCase):
 
     def test_post_form_passing_basic_auth(self):
         """Ensure POSTing json over basic auth with correct credentials passes and does not require CSRF"""
-        credentials = ('%s:%s' % (self.username, self.password))
+        credentials = f'{self.username}:{self.password}'
         base64_credentials = base64.b64encode(credentials.encode(HTTP_HEADER_ENCODING)).decode(HTTP_HEADER_ENCODING)
-        auth = 'Basic %s' % base64_credentials
+        auth = f'Basic {base64_credentials}'
         response = self.csrf_client.post('/basic/', {'example': 'example'}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_post_json_passing_basic_auth(self):
         """Ensure POSTing form over basic auth with correct credentials passes and does not require CSRF"""
-        credentials = ('%s:%s' % (self.username, self.password))
+        credentials = f'{self.username}:{self.password}'
         base64_credentials = base64.b64encode(credentials.encode(HTTP_HEADER_ENCODING)).decode(HTTP_HEADER_ENCODING)
-        auth = 'Basic %s' % base64_credentials
+        auth = f'Basic {base64_credentials}'
         response = self.csrf_client.post('/basic/', {'example': 'example'}, format='json', HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -158,19 +158,19 @@ class TokenAuthTests(TestCase):
 
     def test_post_form_passing_token_auth(self):
         """Ensure POSTing json over token auth with correct credentials passes and does not require CSRF"""
-        auth = 'Token ' + self.key
+        auth = f'Token {self.key}'
         response = self.csrf_client.post('/token/', {'example': 'example'}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_post_json_passing_token_auth(self):
         """Ensure POSTing form over token auth with correct credentials passes and does not require CSRF"""
-        auth = "Token " + self.key
+        auth = f"Token {self.key}"
         response = self.csrf_client.post('/token/', {'example': 'example'}, format='json', HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_post_json_makes_one_db_query(self):
         """Ensure that authenticating a user using a token performs only one DB query"""
-        auth = "Token " + self.key
+        auth = f"Token {self.key}"
 
         def func_to_test():
             return self.csrf_client.post('/token/', {'example': 'example'}, format='json', HTTP_AUTHORIZATION=auth)

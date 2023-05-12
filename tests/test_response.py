@@ -40,11 +40,11 @@ DUMMYCONTENT = 'dummycontent'
 
 
 def RENDERER_A_SERIALIZER(x):
-    return ('Renderer A: %s' % x).encode('ascii')
+    return f'Renderer A: {x}'.encode('ascii')
 
 
 def RENDERER_B_SERIALIZER(x):
-    return ('Renderer B: %s' % x).encode('ascii')
+    return f'Renderer B: {x}'.encode('ascii')
 
 
 class RendererA(BaseRenderer):
@@ -137,7 +137,9 @@ class RendererIntegrationTests(TestCase):
     def test_default_renderer_serializes_content(self):
         """If the Accept header is not set the default renderer should serialize the response."""
         resp = self.client.get('/')
-        self.assertEqual(resp['Content-Type'], RendererA.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererA.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_A_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
@@ -145,13 +147,17 @@ class RendererIntegrationTests(TestCase):
         """No response must be included in HEAD requests."""
         resp = self.client.head('/')
         self.assertEqual(resp.status_code, DUMMYSTATUS)
-        self.assertEqual(resp['Content-Type'], RendererA.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererA.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, six.b(''))
 
     def test_default_renderer_serializes_content_on_accept_any(self):
         """If the Accept header is set to */* the default renderer should serialize the response."""
         resp = self.client.get('/', HTTP_ACCEPT='*/*')
-        self.assertEqual(resp['Content-Type'], RendererA.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererA.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_A_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
@@ -159,7 +165,9 @@ class RendererIntegrationTests(TestCase):
         """If the Accept header is set the specified renderer should serialize the response.
         (In this case we check that works for the default renderer)"""
         resp = self.client.get('/', HTTP_ACCEPT=RendererA.media_type)
-        self.assertEqual(resp['Content-Type'], RendererA.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererA.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_A_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
@@ -167,26 +175,29 @@ class RendererIntegrationTests(TestCase):
         """If the Accept header is set the specified renderer should serialize the response.
         (In this case we check that works for a non-default renderer)"""
         resp = self.client.get('/', HTTP_ACCEPT=RendererB.media_type)
-        self.assertEqual(resp['Content-Type'], RendererB.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererB.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_B_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
     def test_specified_renderer_serializes_content_on_accept_query(self):
         """The '_accept' query string should behave in the same way as the Accept header."""
-        param = '?%s=%s' % (
-            api_settings.URL_ACCEPT_OVERRIDE,
-            RendererB.media_type
+        param = f'?{api_settings.URL_ACCEPT_OVERRIDE}={RendererB.media_type}'
+        resp = self.client.get(f'/{param}')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererB.media_type}; charset=utf-8'
         )
-        resp = self.client.get('/' + param)
-        self.assertEqual(resp['Content-Type'], RendererB.media_type + '; charset=utf-8')
         self.assertEqual(resp.content, RENDERER_B_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
     def test_specified_renderer_serializes_content_on_format_query(self):
         """If a 'format' query is specified, the renderer with the matching
         format attribute should serialize the response."""
-        resp = self.client.get('/?format=%s' % RendererB.format)
-        self.assertEqual(resp['Content-Type'], RendererB.media_type + '; charset=utf-8')
+        resp = self.client.get(f'/?format={RendererB.format}')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererB.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_B_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
@@ -194,16 +205,21 @@ class RendererIntegrationTests(TestCase):
         """If a 'format' keyword arg is specified, the renderer with the matching
         format attribute should serialize the response."""
         resp = self.client.get('/something.formatb')
-        self.assertEqual(resp['Content-Type'], RendererB.media_type + '; charset=utf-8')
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererB.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_B_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
     def test_specified_renderer_is_used_on_format_query_with_matching_accept(self):
         """If both a 'format' query and a matching Accept header specified,
         the renderer with the matching format attribute should serialize the response."""
-        resp = self.client.get('/?format=%s' % RendererB.format,
-                               HTTP_ACCEPT=RendererB.media_type)
-        self.assertEqual(resp['Content-Type'], RendererB.media_type + '; charset=utf-8')
+        resp = self.client.get(
+            f'/?format={RendererB.format}', HTTP_ACCEPT=RendererB.media_type
+        )
+        self.assertEqual(
+            resp['Content-Type'], f'{RendererB.media_type}; charset=utf-8'
+        )
         self.assertEqual(resp.content, RENDERER_B_SERIALIZER(DUMMYCONTENT))
         self.assertEqual(resp.status_code, DUMMYSTATUS)
 
@@ -276,11 +292,8 @@ class Issue807Tests(TestCase):
         self.assertEqual('setbyview', resp['Content-Type'])
 
     def test_viewset_label_help_text(self):
-        param = '?%s=%s' % (
-            api_settings.URL_ACCEPT_OVERRIDE,
-            'text/html'
-        )
-        resp = self.client.get('/html_new_model_viewset/' + param)
+        param = f'?{api_settings.URL_ACCEPT_OVERRIDE}=text/html'
+        resp = self.client.get(f'/html_new_model_viewset/{param}')
         self.assertEqual(resp['Content-Type'], 'text/html; charset=utf-8')
         # self.assertContains(resp, 'Text comes here')
         # self.assertContains(resp, 'Text description.')

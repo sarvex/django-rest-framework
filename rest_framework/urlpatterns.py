@@ -51,10 +51,7 @@ def format_suffix_patterns(urlpatterns, suffix_required=False, allowed=None):
     """
     suffix_kwarg = api_settings.FORMAT_SUFFIX_KWARG
     if allowed:
-        if len(allowed) == 1:
-            allowed_pattern = allowed[0]
-        else:
-            allowed_pattern = '(%s)' % '|'.join(allowed)
+        allowed_pattern = allowed[0] if len(allowed) == 1 else f"({'|'.join(allowed)})"
         suffix_pattern = r'\.(?P<%s>%s)$' % (suffix_kwarg, allowed_pattern)
     else:
         suffix_pattern = r'\.(?P<%s>[a-z0-9]+)$' % suffix_kwarg

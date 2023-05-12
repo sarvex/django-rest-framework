@@ -13,7 +13,7 @@ def get_version(package):
     Return package version as listed in `__version__` in `init.py`.
     """
     init_py = open(os.path.join(package, '__init__.py')).read()
-    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
+    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py)[1]
 
 
 def get_packages(package):
@@ -54,7 +54,7 @@ if sys.argv[-1] == 'publish':
     os.system("python setup.py sdist bdist_wheel")
     os.system("twine upload dist/*")
     print("You probably want to also tag the version now:")
-    print("  git tag -a %s -m 'version %s'" % (version, version))
+    print(f"  git tag -a {version} -m 'version {version}'")
     print("  git push --tags")
     sys.exit()
 

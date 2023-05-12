@@ -14,11 +14,31 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'Token'
-        db.create_table('authtoken_token', (
-            ('key', self.gf('django.db.models.fields.CharField')(max_length=40, primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(related_name='auth_token', unique=True, to=orm['%s.%s' % (User._meta.app_label, User._meta.object_name)])),
-            ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-        ))
+        db.create_table(
+            'authtoken_token',
+            (
+                (
+                    'key',
+                    self.gf('django.db.models.fields.CharField')(
+                        max_length=40, primary_key=True
+                    ),
+                ),
+                (
+                    'user',
+                    self.gf('django.db.models.fields.related.OneToOneField')(
+                        related_name='auth_token',
+                        unique=True,
+                        to=orm[f'{User._meta.app_label}.{User._meta.object_name}'],
+                    ),
+                ),
+                (
+                    'created',
+                    self.gf('django.db.models.fields.DateTimeField')(
+                        auto_now_add=True, blank=True
+                    ),
+                ),
+            ),
+        )
         db.send_create_signal('authtoken', ['Token'])
 
     def backwards(self, orm):

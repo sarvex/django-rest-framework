@@ -66,13 +66,9 @@ def get_field_kwargs(field_name, model_field):
     """
     Creates a default instance of a basic non-relational field.
     """
-    kwargs = {}
     validator_kwarg = list(model_field.validators)
 
-    # The following will only be used by ModelField classes.
-    # Gets removed for everything else.
-    kwargs['model_field'] = model_field
-
+    kwargs = {'model_field': model_field}
     if model_field.verbose_name and needs_label(model_field, field_name):
         kwargs['label'] = capfirst(model_field.verbose_name)
 
@@ -213,8 +209,7 @@ def get_relation_kwargs(field_name, relation_info):
     if model_field:
         if model_field.verbose_name and needs_label(model_field, field_name):
             kwargs['label'] = capfirst(model_field.verbose_name)
-        help_text = clean_manytomany_helptext(model_field.help_text)
-        if help_text:
+        if help_text := clean_manytomany_helptext(model_field.help_text):
             kwargs['help_text'] = help_text
         if not model_field.editable:
             kwargs['read_only'] = True

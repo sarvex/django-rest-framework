@@ -114,11 +114,11 @@ class BaseSerializer(Field):
             return CustomListSerializer(*args, **kwargs)
         """
         child_serializer = cls(*args, **kwargs)
-        list_kwargs = {'child': child_serializer}
-        list_kwargs.update(dict([
-            (key, value) for key, value in kwargs.items()
+        list_kwargs = {'child': child_serializer} | [
+            (key, value)
+            for key, value in kwargs.items()
             if key in LIST_SERIALIZER_KWARGS
-        ]))
+        ]
         meta = getattr(cls, 'Meta', None)
         list_serializer_class = getattr(meta, 'list_serializer_class', ListSerializer)
         return list_serializer_class(*args, **list_kwargs)
@@ -394,7 +394,7 @@ class Serializer(BaseSerializer):
         ]
 
         for field in fields:
-            validate_method = getattr(self, 'validate_' + field.field_name, None)
+            validate_method = getattr(self, f'validate_{field.field_name}', None)
             primitive_value = field.get_value(data)
             try:
                 validated_value = field.run_validation(primitive_value)
@@ -766,11 +766,11 @@ class ModelSerializer(Serializer):
         # They are not valid arguments to the default `.create()` method,
         # as they require that the instance has already been saved.
         info = model_meta.get_field_info(ModelClass)
-        many_to_many = {}
-        for field_name, relation_info in info.relations.items():
-            if relation_info.to_many and (field_name in validated_data):
-                many_to_many[field_name] = validated_data.pop(field_name)
-
+        many_to_many = {
+            field_name: validated_data.pop(field_name)
+            for field_name, relation_info in info.relations.items()
+            if relation_info.to_many and (field_name in validated_data)
+        }
         try:
             instance = ModelClass.objects.create(**validated_data)
         except TypeError as exc:
@@ -885,14 +885,12 @@ class ModelSerializer(Serializer):
 
         if fields and not isinstance(fields, (list, tuple)):
             raise TypeError(
-                'The `fields` option must be a list or tuple. Got %s.' %
-                type(fields).__name__
+                f'The `fields` option must be a list or tuple. Got {type(fields).__name__}.'
             )
 
         if exclude and not isinstance(exclude, (list, tuple)):
             raise TypeError(
-                'The `exclude` option must be a list or tuple. Got %s.' %
-                type(exclude).__name__
+                f'The `exclude` option must be a list or tuple. Got {type(exclude).__name__}.'
             )
 
         assert not (fields and exclude), (
@@ -1064,8 +1062,7 @@ class ModelSerializer(Serializer):
         Raise an error on any unknown fields.
         """
         raise ImproperlyConfigured(
-            'Field name `%s` is not valid for model `%s`.' %
-            (field_name, model_class.__name__)
+            f'Field name `{field_name}` is not valid for model `{model_class.__name__}`.'
         )
 
     def include_extra_kwargs(self, kwargs, extra_kwargs):
@@ -1164,13 +1161,13 @@ class ModelSerializer(Serializer):
 
         for model_field in model_fields.values():
             # Include each of the `unique_for_*` field names.
-            unique_constraint_names |= set([
+            unique_constraint_names |= {
                 model_field.unique_for_date,
                 model_field.unique_for_month,
-                model_field.unique_for_year
-            ])
+                model_field.unique_for_year,
+            }
 
-        unique_constraint_names -= set([None])
+        unique_constraint_names -= {None}
 
         # Include each of the `unique_together` field names,
         # so long as all the field names are included on the serializer.
@@ -1284,10 +1281,11 @@ class ModelSerializer(Serializer):
         # which may map onto a model field. Any dotted field name lookups
         # cannot map to a field, and must be a traversal, so we're not
         # including those.
-        field_names = set([
-            field.source for field in self.fields.values()
+        field_names = {
+            field.source
+            for field in self.fields.values()
             if (field.source != '*') and ('.' not in field.source)
-        ])
+        }
 
         # Note that we make sure to check `unique_together` both on the
         # base model class, but also on any parent classes.

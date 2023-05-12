@@ -26,10 +26,14 @@ class DefaultContentNegotiation(BaseContentNegotiation):
         Given a list of parsers and a media type, return the appropriate
         parser to handle the incoming request.
         """
-        for parser in parsers:
-            if media_type_matches(parser.media_type, request.content_type):
-                return parser
-        return None
+        return next(
+            (
+                parser
+                for parser in parsers
+                if media_type_matches(parser.media_type, request.content_type)
+            ),
+            None,
+        )
 
     def select_renderer(self, request, renderers, format_suffix=None):
         """
@@ -38,9 +42,7 @@ class DefaultContentNegotiation(BaseContentNegotiation):
         """
         # Allow URL style format override.  eg. "?format=json
         format_query_param = self.settings.URL_FORMAT_OVERRIDE
-        format = format_suffix or request.query_params.get(format_query_param)
-
-        if format:
+        if format := format_suffix or request.query_params.get(format_query_param):
             renderers = self.filter_renderers(renderers, format)
 
         accepts = self.get_accept_list(request)
@@ -73,11 +75,12 @@ class DefaultContentNegotiation(BaseContentNegotiation):
         If there is a '.json' style format suffix, filter the renderers
         so that we only negotiation against those that accept that format.
         """
-        renderers = [renderer for renderer in renderers
-                     if renderer.format == format]
-        if not renderers:
+        if renderers := [
+            renderer for renderer in renderers if renderer.format == format
+        ]:
+            return renderers
+        else:
             raise Http404
-        return renderers
 
     def get_accept_list(self, request):
         """

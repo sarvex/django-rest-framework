@@ -309,7 +309,7 @@ class HTMLFormRenderer(BaseRenderer):
             return ''
 
         style = dict(self.default_style[field])
-        style.update(field.style)
+        style |= field.style
         if 'template_pack' not in style:
             style['template_pack'] = parent_style.get('template_pack', self.template_pack)
         style['renderer'] = self
@@ -396,8 +396,10 @@ class BrowsableAPIRenderer(BaseRenderer):
         content = renderer.render(data, accepted_media_type, renderer_context)
 
         render_style = getattr(renderer, 'render_style', 'text')
-        assert render_style in ['text', 'binary'], 'Expected .render_style ' \
+        assert render_style in {'text', 'binary'}, (
+            'Expected .render_style '
             '"text" or "binary", but got "%s"' % render_style
+        )
         if render_style == 'binary':
             return '[%d bytes of binary content]' % len(content)
 
@@ -465,11 +467,10 @@ class BrowsableAPIRenderer(BaseRenderer):
 
             if existing_serializer is not None:
                 serializer = existing_serializer
+            elif method in ('PUT', 'PATCH'):
+                serializer = view.get_serializer(instance=instance, **kwargs)
             else:
-                if method in ('PUT', 'PATCH'):
-                    serializer = view.get_serializer(instance=instance, **kwargs)
-                else:
-                    serializer = view.get_serializer(**kwargs)
+                serializer = view.get_serializer(**kwargs)
 
             if hasattr(serializer, 'initial_data'):
                 serializer.is_valid()
@@ -586,9 +587,9 @@ class BrowsableAPIRenderer(BaseRenderer):
         response_headers = dict(response.items())
         renderer_content_type = ''
         if renderer:
-            renderer_content_type = '%s' % renderer.media_type
+            renderer_content_type = f'{renderer.media_type}'
             if renderer.charset:
-                renderer_content_type += ' ;%s' % renderer.charset
+                renderer_content_type += f' ;{renderer.charset}'
         response_headers['Content-Type'] = renderer_content_type
 
         if hasattr(view, 'paginator') and view.paginator.display_page_controls:
@@ -596,8 +597,10 @@ class BrowsableAPIRenderer(BaseRenderer):
         else:
             paginator = None
 
-        context = {
-            'content': self.get_content(renderer, data, accepted_media_type, renderer_context),
+        return {
+            'content': self.get_content(
+                renderer, data, accepted_media_type, renderer_context
+            ),
             'view': view,
             'request': request,
             'response': response,
@@ -607,24 +610,25 @@ class BrowsableAPIRenderer(BaseRenderer):
             'paginator': paginator,
             'breadcrumblist': self.get_breadcrumbs(request),
             'allowed_methods': view.allowed_methods,
-            'available_formats': [renderer_cls.format for renderer_cls in view.renderer_classes],
+            'available_formats': [
+                renderer_cls.format for renderer_cls in view.renderer_classes
+            ],
             'response_headers': response_headers,
-
             'put_form': self.get_rendered_html_form(data, view, 'PUT', request),
             'post_form': self.get_rendered_html_form(data, view, 'POST', request),
-            'delete_form': self.get_rendered_html_form(data, view, 'DELETE', request),
-            'options_form': self.get_rendered_html_form(data, view, 'OPTIONS', request),
-
+            'delete_form': self.get_rendered_html_form(
+                data, view, 'DELETE', request
+            ),
+            'options_form': self.get_rendered_html_form(
+                data, view, 'OPTIONS', request
+            ),
             'raw_data_put_form': raw_data_put_form,
             'raw_data_post_form': raw_data_post_form,
             'raw_data_patch_form': raw_data_patch_form,
             'raw_data_put_or_patch_form': raw_data_put_or_patch_form,
-
-            'display_edit_forms': bool(response.status_code != 403),
-
-            'api_settings': api_settings
+            'display_edit_forms': response.status_code != 403,
+            'api_settings': api_settings,
         }
-        return context
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         """

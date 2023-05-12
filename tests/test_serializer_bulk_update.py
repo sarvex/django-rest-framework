@@ -84,7 +84,7 @@ class BulkCreateSerializerTests(TestCase):
         self.assertEqual(serializer.is_valid(), False)
 
         text_type_string = six.text_type.__name__
-        message = 'Invalid data. Expected a dictionary, but got %s.' % text_type_string
+        message = f'Invalid data. Expected a dictionary, but got {text_type_string}.'
         expected_errors = [
             {'non_field_errors': [message]},
             {'non_field_errors': [message]},

@@ -38,8 +38,9 @@ def optional_login(request):
     except NoReverseMatch:
         return ''
 
-    snippet = "<li><a href='{href}?next={next}'>Log in</a></li>".format(href=login_url, next=escape(request.path))
-    return snippet
+    return "<li><a href='{href}?next={next}'>Log in</a></li>".format(
+        href=login_url, next=escape(request.path)
+    )
 
 
 @register.simple_tag
@@ -91,17 +92,16 @@ def add_class(value, css_class):
     classes to the forms.
     """
     html = six.text_type(value)
-    match = class_re.search(html)
-    if match:
-        m = re.search(r'^%s$|^%s\s|\s%s\s|\s%s$' % (css_class, css_class,
-                                                    css_class, css_class),
-                      match.group(1))
-        if not m:
-            return mark_safe(class_re.sub(match.group(1) + " " + css_class,
-                                          html))
+    if not (match := class_re.search(html)):
+        return mark_safe(html.replace('>', f' class="{css_class}">', 1))
+    if m := re.search(
+        r'^%s$|^%s\s|\s%s\s|\s%s$'
+        % (css_class, css_class, css_class, css_class),
+        match.group(1),
+    ):
+        return value
     else:
-        return mark_safe(html.replace('>', ' class="%s">' % css_class, 1))
-    return value
+        return mark_safe(class_re.sub(f"{match.group(1)} {css_class}", html))
 
 
 # Bunch of stuff cloned from urlize
@@ -144,7 +144,12 @@ def urlize_quoted_links(text, trim_url_limit=None, nofollow=True, autoescape=Tru
     If autoescape is True, the link text and URLs will get autoescaped.
     """
     def trim_url(x, limit=trim_url_limit):
-        return limit is not None and (len(x) > limit and ('%s...' % x[:max(0, limit - 3)])) or x
+        return (
+            limit is not None
+            and len(x) > limit
+            and f'{x[:max(0, limit - 3)]}...'
+            or x
+        )
 
     safe_input = isinstance(text, SafeData)
     words = word_split_re.split(force_text(text))
@@ -174,14 +179,14 @@ def urlize_quoted_links(text, trim_url_limit=None, nofollow=True, autoescape=Tru
             if simple_url_re.match(middle):
                 url = smart_urlquote_wrapper(middle)
             elif simple_url_2_re.match(middle):
-                url = smart_urlquote_wrapper('http://%s' % middle)
+                url = smart_urlquote_wrapper(f'http://{middle}')
             elif ':' not in middle and simple_email_re.match(middle):
                 local, domain = middle.rsplit('@', 1)
                 try:
                     domain = domain.encode('idna').decode('ascii')
                 except UnicodeError:
                     continue
-                url = 'mailto:%s@%s' % (local, domain)
+                url = f'mailto:{local}@{domain}'
                 nofollow_attr = ''
 
             # Make link.
@@ -190,8 +195,8 @@ def urlize_quoted_links(text, trim_url_limit=None, nofollow=True, autoescape=Tru
                 if autoescape and not safe_input:
                     lead, trail = escape(lead), escape(trail)
                     url, trimmed = escape(url), escape(trimmed)
-                middle = '<a href="%s"%s>%s</a>' % (url, nofollow_attr, trimmed)
-                words[i] = mark_safe('%s%s%s' % (lead, middle, trail))
+                middle = f'<a href="{url}"{nofollow_attr}>{trimmed}</a>'
+                words[i] = mark_safe(f'{lead}{middle}{trail}')
             else:
                 if safe_input:
                     words[i] = mark_safe(word)

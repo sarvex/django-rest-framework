@@ -37,9 +37,7 @@ def _divide_with_ceil(a, b):
     """
     Returns 'a' divded by 'b', with any remainder rounded up.
     """
-    if a % b:
-        return (a // b) + 1
-    return a // b
+    return (a // b) + 1 if a % b else a // b
 
 
 def _get_count(queryset):
@@ -78,11 +76,7 @@ def _get_displayed_page_numbers(current, final):
 
     # We always include the first two pages, last two pages, and
     # two pages either side of the current page.
-    included = set((
-        1,
-        current - 1, current, current + 1,
-        final
-    ))
+    included = {1, current - 1, current, current + 1, final}
 
     # If the break would only exclude a single page number then we
     # may as well include the page number instead of the break.
@@ -177,9 +171,9 @@ def _reverse_ordering(ordering_tuple):
     ordering and return a new tuple, eg. `('created', '-uuid')`.
     """
     def invert(x):
-        return x[1:] if (x.startswith('-')) else '-' + x
+        return x[1:] if (x.startswith('-')) else f'-{x}'
 
-    return tuple([invert(item) for item in ordering_tuple])
+    return tuple(invert(item) for item in ordering_tuple)
 
 
 Cursor = namedtuple('Cursor', ['offset', 'reverse', 'position'])
@@ -462,9 +456,8 @@ class LimitOffsetPagination(BasePagination):
         def page_number_to_url(page_number):
             if page_number == 1:
                 return remove_query_param(base_url, self.offset_query_param)
-            else:
-                offset = self.offset + ((page_number - current) * self.limit)
-                return replace_query_param(base_url, self.offset_query_param, offset)
+            offset = self.offset + ((page_number - current) * self.limit)
+            return replace_query_param(base_url, self.offset_query_param, offset)
 
         page_numbers = _get_displayed_page_numbers(current, final)
         page_links = _get_page_links(page_numbers, current, page_number_to_url)
@@ -525,9 +518,9 @@ class CursorPagination(BasePagination):
 
             # Test for: (cursor reversed) XOR (queryset reversed)
             if self.cursor.reverse != is_reversed:
-                kwargs = {order_attr + '__lt': current_position}
+                kwargs = {f'{order_attr}__lt': current_position}
             else:
-                kwargs = {order_attr + '__gt': current_position}
+                kwargs = {f'{order_attr}__gt': current_position}
 
             queryset = queryset.filter(**kwargs)
 
@@ -545,12 +538,9 @@ class CursorPagination(BasePagination):
             has_following_postion = False
             following_position = None
 
-        # If we have a reverse queryset, then the query ordering was in reverse
-        # so we need to reverse the items again before returning them to the user.
         if reverse:
             self.page = list(reversed(self.page))
 
-        if reverse:
             # Determine next and previous positions for reverse cursors.
             self.has_next = (current_position is not None) or (offset > 0)
             self.has_previous = has_following_postion
@@ -676,12 +666,11 @@ class CursorPagination(BasePagination):
         """
         Return a tuple of strings, that may be used in an `order_by` method.
         """
-        ordering_filters = [
-            filter_cls for filter_cls in getattr(view, 'filter_backends', [])
+        if ordering_filters := [
+            filter_cls
+            for filter_cls in getattr(view, 'filter_backends', [])
             if hasattr(filter_cls, 'get_ordering')
-        ]
-
-        if ordering_filters:
+        ]:
             # If a filter exists on the view that implements `get_ordering`
             # then we defer to that filter to determine the ordering.
             filter_cls = ordering_filters[0]

@@ -289,7 +289,7 @@ class TestFKInstanceView(TestCase):
         for item in items:
             t = ForeignKeyTarget(name=item)
             t.save()
-            ForeignKeySource(name='source_' + item, target=t).save()
+            ForeignKeySource(name=f'source_{item}', target=t).save()
 
         self.objects = ForeignKeySource.objects
         self.data = [
@@ -428,15 +428,18 @@ class DynamicSerializerView(generics.ListCreateAPIView):
     renderer_classes = (renderers.BrowsableAPIRenderer, renderers.JSONRenderer)
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            class DynamicSerializer(serializers.ModelSerializer):
-                class Meta:
-                    model = TwoFieldModel
+
+
+        class DynamicSerializer(serializers.ModelSerializer):
+
+
+
+            class Meta:
+                model = TwoFieldModel
+                if self.request.method == 'POST':
                     fields = ('field_b',)
-        else:
-            class DynamicSerializer(serializers.ModelSerializer):
-                class Meta:
-                    model = TwoFieldModel
+
+
         return DynamicSerializer
 
 

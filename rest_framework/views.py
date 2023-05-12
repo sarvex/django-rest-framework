@@ -30,7 +30,7 @@ def get_view_name(view_cls, suffix=None):
     name = formatting.remove_trailing_string(name, 'ViewSet')
     name = formatting.camelcase_to_spaces(name)
     if suffix:
-        name += ' ' + suffix
+        name += f' {suffix}'
 
     return name
 
@@ -44,9 +44,7 @@ def get_view_description(view_cls, html=False):
     """
     description = view_cls.__doc__ or ''
     description = formatting.dedent(smart_text(description))
-    if html:
-        return formatting.markup_description(description)
-    return description
+    return formatting.markup_description(description) if html else description
 
 
 def exception_handler(exc, context):
@@ -159,8 +157,7 @@ class APIView(View):
         If a request is unauthenticated, determine the WWW-Authenticate
         header to use for 401 responses, if any.
         """
-        authenticators = self.get_authenticators()
-        if authenticators:
+        if authenticators := self.get_authenticators():
             return authenticators[0].authenticate_header(request)
 
     def get_parser_context(self, http_request):
@@ -395,10 +392,7 @@ class APIView(View):
         """
         if isinstance(exc, (exceptions.NotAuthenticated,
                             exceptions.AuthenticationFailed)):
-            # WWW-Authenticate header for 401 responses, else coerce to 403
-            auth_header = self.get_authenticate_header(self.request)
-
-            if auth_header:
+            if auth_header := self.get_authenticate_header(self.request):
                 exc.auth_header = auth_header
             else:
                 exc.status_code = status.HTTP_403_FORBIDDEN

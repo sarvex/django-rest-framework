@@ -26,8 +26,10 @@ def is_form_media_type(media_type):
     Return True if the media type is a valid form media type.
     """
     base_media_type, params = parse_header(media_type.encode(HTTP_HEADER_ENCODING))
-    return (base_media_type == 'application/x-www-form-urlencoded' or
-            base_media_type == 'multipart/form-data')
+    return base_media_type in [
+        'application/x-www-form-urlencoded',
+        'multipart/form-data',
+    ]
 
 
 class override_method(object):
@@ -69,7 +71,7 @@ class Empty(object):
 
 
 def _hasattr(obj, name):
-    return not getattr(obj, name) is Empty
+    return getattr(obj, name) is not Empty
 
 
 def clone_request(request, method):

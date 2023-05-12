@@ -464,6 +464,7 @@ class TestIntegration(TestCase):
         self.assertEqual(serializer.data, expected)
 
     def test_pk_create(self):
+
         class TestSerializer(serializers.ModelSerializer):
             class Meta:
                 model = RelationalModel
@@ -498,7 +499,7 @@ class TestIntegration(TestCase):
         ] == [
             item.pk for item in new_many_to_many
         ]
-        assert list(instance.through.all()) == []
+        assert not list(instance.through.all())
 
         # Representation should be correct.
         expected = {
@@ -511,6 +512,7 @@ class TestIntegration(TestCase):
         self.assertEqual(serializer.data, expected)
 
     def test_pk_update(self):
+
         class TestSerializer(serializers.ModelSerializer):
             class Meta:
                 model = RelationalModel
@@ -545,7 +547,7 @@ class TestIntegration(TestCase):
         ] == [
             item.pk for item in new_many_to_many
         ]
-        assert list(instance.through.all()) == []
+        assert not list(instance.through.all())
 
         # Representation should be correct.
         expected = {

@@ -120,13 +120,11 @@ class CreateOnlyDefault(object):
     def __call__(self):
         if self.is_update:
             raise SkipField()
-        if callable(self.default):
-            return self.default()
-        return self.default
+        return self.default() if callable(self.default) else self.default
 
     def __repr__(self):
         return unicode_to_repr(
-            '%s(%s)' % (self.__class__.__name__, unicode_repr(self.default))
+            f'{self.__class__.__name__}({unicode_repr(self.default)})'
         )
 
 
@@ -138,7 +136,7 @@ class CurrentUserDefault(object):
         return self.user
 
     def __repr__(self):
-        return unicode_to_repr('%s()' % self.__class__.__name__)
+        return unicode_to_repr(f'{self.__class__.__name__}()')
 
 
 class SkipField(Exception):
@@ -210,7 +208,7 @@ class Field(object):
         # Collect default error message from self and parent classes
         messages = {}
         for cls in reversed(self.__class__.__mro__):
-            messages.update(getattr(cls, 'default_error_messages', {}))
+            messages |= getattr(cls, 'default_error_messages', {})
         messages.update(error_messages or {})
         self.error_messages = messages
 
@@ -243,10 +241,7 @@ class Field(object):
 
         # self.source_attrs is a list of attributes that need to be looked up
         # when serializing the instance, or populating the validated data.
-        if self.source == '*':
-            self.source_attrs = []
-        else:
-            self.source_attrs = self.source.split('.')
+        self.source_attrs = [] if self.source == '*' else self.source.split('.')
 
     # .validators is a lazily loaded property, that gets its default
     # value from `get_validators`.
@@ -275,20 +270,20 @@ class Field(object):
         Given the *incoming* primitive data, return the value for this field
         that should be validated and transformed to a native value.
         """
-        if html.is_html_input(dictionary):
-            # HTML forms will represent empty fields as '', and cannot
-            # represent None or False values directly.
-            if self.field_name not in dictionary:
-                if getattr(self.root, 'partial', False):
-                    return empty
-                return self.default_empty_html
-            ret = dictionary[self.field_name]
-            if ret == '' and self.allow_null:
-                # If the field is blank, and null is a valid value then
-                # determine if we should use null instead.
-                return '' if getattr(self, 'allow_blank', False) else None
-            return ret
-        return dictionary.get(self.field_name, empty)
+        if not html.is_html_input(dictionary):
+            return dictionary.get(self.field_name, empty)
+        # HTML forms will represent empty fields as '', and cannot
+        # represent None or False values directly.
+        if self.field_name not in dictionary:
+            if getattr(self.root, 'partial', False):
+                return empty
+            return self.default_empty_html
+        ret = dictionary[self.field_name]
+        if ret == '' and self.allow_null:
+            # If the field is blank, and null is a valid value then
+            # determine if we should use null instead.
+            return '' if getattr(self, 'allow_blank', False) else None
+        return ret
 
     def get_attribute(self, instance):
         """
@@ -811,9 +806,7 @@ class DecimalField(Field):
             decimal.Decimal('.1') ** self.decimal_places,
             context=context
         )
-        if not self.coerce_to_string:
-            return quantized
-        return '{0:f}'.format(quantized)
+        return quantized if not self.coerce_to_string else '{0:f}'.format(quantized)
 
 
 # Date & time fields...
@@ -878,7 +871,7 @@ class DateTimeField(Field):
         if self.format.lower() == ISO_8601:
             value = value.isoformat()
             if value.endswith('+00:00'):
-                value = value[:-6] + 'Z'
+                value = f'{value[:-6]}Z'
             return value
         return value.strftime(self.format)
 
@@ -1011,7 +1004,7 @@ class ChoiceField(Field):
             for item in choices
         ]
         if all(pairs):
-            self.choices = OrderedDict([(key, display_value) for key, display_value in choices])
+            self.choices = OrderedDict(list(choices))
         else:
             self.choices = OrderedDict([(item, item) for item in choices])
 
@@ -1059,15 +1052,13 @@ class MultipleChoiceField(ChoiceField):
         if isinstance(data, type('')) or not hasattr(data, '__iter__'):
             self.fail('not_a_list', input_type=type(data).__name__)
 
-        return set([
+        return {
             super(MultipleChoiceField, self).to_internal_value(item)
             for item in data
-        ])
+        }
 
     def to_representation(self, value):
-        return set([
-            self.choice_strings_to_values[six.text_type(item)] for item in value
-        ])
+        return {self.choice_strings_to_values[six.text_type(item)] for item in value}
 
 
 # File types...
@@ -1111,9 +1102,7 @@ class FileField(Field):
                 return None
             url = value.url
             request = self.context.get('request', None)
-            if request is not None:
-                return request.build_absolute_uri(url)
-            return url
+            return request.build_absolute_uri(url) if request is not None else url
         return value.name
 
 

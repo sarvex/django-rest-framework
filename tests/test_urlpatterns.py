@@ -31,7 +31,7 @@ class FormatSuffixTests(TestCase):
             try:
                 callback, callback_args, callback_kwargs = resolver.resolve(request.path_info)
             except Exception:
-                self.fail("Failed to resolve URL: %s" % request.path_info)
+                self.fail(f"Failed to resolve URL: {request.path_info}")
             self.assertEqual(callback_args, test_path.args)
             self.assertEqual(callback_kwargs, test_path.kwargs)
 

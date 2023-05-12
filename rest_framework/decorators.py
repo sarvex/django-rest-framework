@@ -40,10 +40,11 @@ def api_view(http_method_names=None):
             '@api_view missing list of allowed HTTP methods'
 
         # api_view applied with eg. string instead of list of strings
-        assert isinstance(http_method_names, (list, tuple)), \
-            '@api_view expected a list of strings, received %s' % type(http_method_names).__name__
+        assert isinstance(
+            http_method_names, (list, tuple)
+        ), f'@api_view expected a list of strings, received {type(http_method_names).__name__}'
 
-        allowed_methods = set(http_method_names) | set(('options',))
+        allowed_methods = set(http_method_names) | {'options'}
         WrappedAPIView.http_method_names = [method.lower() for method in allowed_methods]
 
         def handler(self, *args, **kwargs):
@@ -70,6 +71,7 @@ def api_view(http_method_names=None):
                                                     APIView.permission_classes)
 
         return WrappedAPIView.as_view()
+
     return decorator
 
 

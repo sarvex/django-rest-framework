@@ -64,9 +64,9 @@ class BoundField(object):
         return self._field.__class__
 
     def __repr__(self):
-        return unicode_to_repr('<%s value=%s errors=%s>' % (
-            self.__class__.__name__, self.value, self.errors
-        ))
+        return unicode_to_repr(
+            f'<{self.__class__.__name__} value={self.value} errors={self.errors}>'
+        )
 
 
 class NestedBoundField(BoundField):
@@ -84,8 +84,8 @@ class NestedBoundField(BoundField):
         value = self.value.get(key) if self.value else None
         error = self.errors.get(key) if self.errors else None
         if hasattr(field, 'fields'):
-            return NestedBoundField(field, value, error, prefix=self.name + '.')
-        return BoundField(field, value, error, prefix=self.name + '.')
+            return NestedBoundField(field, value, error, prefix=f'{self.name}.')
+        return BoundField(field, value, error, prefix=f'{self.name}.')
 
 
 class BindingDict(collections.MutableMapping):

@@ -20,18 +20,14 @@ except ImportError:
 def unicode_repr(instance):
     # Get the repr of an instance, but ensure it is a unicode string
     # on both python 3 (already the case) and 2 (not the case).
-    if six.PY2:
-        return repr(instance).decode('utf-8')
-    return repr(instance)
+    return repr(instance).decode('utf-8') if six.PY2 else repr(instance)
 
 
 def unicode_to_repr(value):
     # Coerce a unicode string to the correct repr return type, depending on
     # the Python version. We wrap all our `__repr__` implementations with
     # this and then use unicode throughout internally.
-    if six.PY2:
-        return value.encode('utf-8')
-    return value
+    return value.encode('utf-8') if six.PY2 else value
 
 
 def unicode_http_header(value):
@@ -213,12 +209,12 @@ class RequestFactory(DjangoRequestFactory):
             'REQUEST_METHOD': six.text_type(method),
         }
         if data:
-            r.update({
+            r |= {
                 'CONTENT_LENGTH': len(data),
                 'CONTENT_TYPE': six.text_type(content_type),
                 'wsgi.input': FakePayload(data),
-            })
-        r.update(extra)
+            }
+        r |= extra
         return self.request(**r)
 
 

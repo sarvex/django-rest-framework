@@ -61,7 +61,7 @@ class JSONParser(BaseParser):
             data = stream.read().decode(encoding)
             return json.loads(data)
         except ValueError as exc:
-            raise ParseError('JSON parse error - %s' % six.text_type(exc))
+            raise ParseError(f'JSON parse error - {six.text_type(exc)}')
 
 
 class FormParser(BaseParser):
@@ -78,8 +78,7 @@ class FormParser(BaseParser):
         """
         parser_context = parser_context or {}
         encoding = parser_context.get('encoding', settings.DEFAULT_CHARSET)
-        data = QueryDict(stream.read(), encoding=encoding)
-        return data
+        return QueryDict(stream.read(), encoding=encoding)
 
 
 class MultiPartParser(BaseParser):
@@ -109,7 +108,7 @@ class MultiPartParser(BaseParser):
             data, files = parser.parse()
             return DataAndFiles(data, files)
         except MultiPartParserError as exc:
-            raise ParseError('Multipart form parse error - %s' % six.text_type(exc))
+            raise ParseError(f'Multipart form parse error - {six.text_type(exc)}')
 
 
 class FileUploadParser(BaseParser):
@@ -177,8 +176,7 @@ class FileUploadParser(BaseParser):
                     break
 
         for index, handler in enumerate(upload_handlers):
-            file_obj = handler.file_complete(counters[index])
-            if file_obj:
+            if file_obj := handler.file_complete(counters[index]):
                 return DataAndFiles({}, {'file': file_obj})
         raise ParseError("FileUpload parse error - "
                          "none of upload handlers can handle the stream")

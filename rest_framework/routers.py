@@ -122,7 +122,7 @@ class SimpleRouter(BaseRouter):
     ]
 
     def __init__(self, trailing_slash=True):
-        self.trailing_slash = trailing_slash and '/' or ''
+        self.trailing_slash = '/' if trailing_slash else ''
         super(SimpleRouter, self).__init__()
 
     def get_default_base_name(self, viewset):
@@ -172,12 +172,16 @@ class SimpleRouter(BaseRouter):
                 initkwargs = route.initkwargs.copy()
                 initkwargs.update(method_kwargs)
                 url_path = initkwargs.pop("url_path", None) or methodname
-                ret.append(Route(
-                    url=replace_methodname(route.url, url_path),
-                    mapping=dict((httpmethod, methodname) for httpmethod in httpmethods),
-                    name=replace_methodname(route.name, url_path),
-                    initkwargs=initkwargs,
-                ))
+                ret.append(
+                    Route(
+                        url=replace_methodname(route.url, url_path),
+                        mapping={
+                            httpmethod: methodname for httpmethod in httpmethods
+                        },
+                        name=replace_methodname(route.name, url_path),
+                        initkwargs=initkwargs,
+                    )
+                )
 
             return ret
 
@@ -201,11 +205,11 @@ class SimpleRouter(BaseRouter):
         return a new mapping which only includes any mappings that
         are actually implemented by the viewset.
         """
-        bound_methods = {}
-        for method, action in method_map.items():
-            if hasattr(viewset, action):
-                bound_methods[method] = action
-        return bound_methods
+        return {
+            method: action
+            for method, action in method_map.items()
+            if hasattr(viewset, action)
+        }
 
     def get_lookup_regex(self, viewset, lookup_prefix=''):
         """
@@ -278,6 +282,8 @@ class DefaultRouter(SimpleRouter):
         for prefix, viewset, basename in self.registry:
             api_root_dict[prefix] = list_name.format(basename=basename)
 
+
+
         class APIRoot(views.APIView):
             _ignore_model_permissions = True
 
@@ -286,7 +292,7 @@ class DefaultRouter(SimpleRouter):
                 namespace = get_resolver_match(request).namespace
                 for key, url_name in api_root_dict.items():
                     if namespace:
-                        url_name = namespace + ':' + url_name
+                        url_name = f'{namespace}:{url_name}'
                     try:
                         ret[key] = reverse(
                             url_name,
@@ -298,6 +304,7 @@ class DefaultRouter(SimpleRouter):
                         continue
 
                 return Response(ret)
+
 
         return APIRoot.as_view()
 

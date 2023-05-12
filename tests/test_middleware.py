@@ -31,7 +31,7 @@ class TestMiddleware(APITestCase):
         Token.objects.create(key=key, user=user)
 
         with self.settings(
-            MIDDLEWARE_CLASSES=('tests.test_middleware.MyMiddleware',)
-        ):
-            auth = 'Token ' + key
+                MIDDLEWARE_CLASSES=('tests.test_middleware.MyMiddleware',)
+            ):
+            auth = f'Token {key}'
             self.client.get('/', HTTP_AUTHORIZATION=auth)

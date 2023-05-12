@@ -88,11 +88,14 @@ class TestAvoidValidation(TestCase):
     def test_serializer_errors_has_only_invalid_data_error(self):
         serializer = ValidationSerializer(data='invalid data')
         self.assertFalse(serializer.is_valid())
-        self.assertDictEqual(serializer.errors, {
-            'non_field_errors': [
-                'Invalid data. Expected a dictionary, but got %s.' % type('').__name__
-            ]
-        })
+        self.assertDictEqual(
+            serializer.errors,
+            {
+                'non_field_errors': [
+                    f"Invalid data. Expected a dictionary, but got {type('').__name__}."
+                ]
+            },
+        )
 
 
 # regression tests for issue: 1493
@@ -163,7 +166,7 @@ class TestChoiceFieldChoicesValidate(TestCase):
         try:
             f.to_internal_value(value)
         except serializers.ValidationError:
-            self.fail("Value %s does not validate" % str(value))
+            self.fail(f"Value {str(value)} does not validate")
 
 
 class RegexSerializer(serializers.Serializer):

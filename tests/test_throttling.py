@@ -64,7 +64,7 @@ class ThrottlingTests(TestCase):
         Ensure request rate is limited
         """
         request = self.factory.get('/')
-        for dummy in range(4):
+        for _ in range(4):
             response = MockView.as_view()(request)
         self.assertEqual(429, response.status_code)
 
@@ -81,7 +81,7 @@ class ThrottlingTests(TestCase):
         self.set_throttle_timer(MockView, 0)
 
         request = self.factory.get('/')
-        for dummy in range(4):
+        for _ in range(4):
             response = MockView.as_view()(request)
         self.assertEqual(429, response.status_code)
 
@@ -94,7 +94,7 @@ class ThrottlingTests(TestCase):
     def ensure_is_throttled(self, view, expect):
         request = self.factory.get('/')
         request.user = User.objects.create(username='a')
-        for dummy in range(3):
+        for _ in range(3):
             view.as_view()(request)
         request.user = User.objects.create(username='b')
         response = view.as_view()(request)
@@ -280,7 +280,7 @@ class ScopedRateThrottleTests(TestCase):
     def test_unscoped_view_not_throttled(self):
         request = self.factory.get('/')
 
-        for idx in range(10):
+        for _ in range(10):
             self.increment_timer()
             response = self.unscoped_view(request)
             self.assertEqual(200, response.status_code)

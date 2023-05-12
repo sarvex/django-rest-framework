@@ -145,8 +145,4 @@ class Throttled(APIException):
             self.wait = None
         else:
             self.wait = math.ceil(wait)
-            self.detail += ' ' + force_text(ungettext(
-                self.extra_detail_singular.format(wait=self.wait),
-                self.extra_detail_plural.format(wait=self.wait),
-                self.wait
-            ))
+            self.detail += f' {force_text(ungettext(self.extra_detail_singular.format(wait=self.wait), self.extra_detail_plural.format(wait=self.wait), self.wait))}'

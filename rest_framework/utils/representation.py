@@ -13,10 +13,15 @@ import re
 def manager_repr(value):
     model = value.model
     opts = model._meta
-    for _, name, manager in opts.concrete_managers + opts.abstract_managers:
-        if manager == value:
-            return '%s.%s.all()' % (model._meta.object_name, name)
-    return repr(value)
+    return next(
+        (
+            f'{model._meta.object_name}.{name}.all()'
+            for _, name, manager in opts.concrete_managers
+            + opts.abstract_managers
+            if manager == value
+        ),
+        repr(value),
+    )
 
 
 def smart_repr(value):
@@ -50,10 +55,9 @@ def field_repr(field, force_many=False):
         kwargs.pop('child', None)
 
     arg_string = ', '.join([smart_repr(val) for val in field._args])
-    kwarg_string = ', '.join([
-        '%s=%s' % (key, smart_repr(val))
-        for key, val in sorted(kwargs.items())
-    ])
+    kwarg_string = ', '.join(
+        [f'{key}={smart_repr(val)}' for key, val in sorted(kwargs.items())]
+    )
     if arg_string and kwarg_string:
         arg_string += ', '
 
@@ -62,18 +66,14 @@ def field_repr(field, force_many=False):
     else:
         class_name = field.__class__.__name__
 
-    return "%s(%s%s)" % (class_name, arg_string, kwarg_string)
+    return f"{class_name}({arg_string}{kwarg_string})"
 
 
 def serializer_repr(serializer, indent, force_many=None):
-    ret = field_repr(serializer, force_many) + ':'
+    ret = f'{field_repr(serializer, force_many)}:'
     indent_str = '    ' * indent
 
-    if force_many:
-        fields = force_many.fields
-    else:
-        fields = serializer.fields
-
+    fields = force_many.fields if force_many else serializer.fields
     for field_name, field in fields.items():
         ret += '\n' + indent_str + field_name + ' = '
         if hasattr(field, 'fields'):

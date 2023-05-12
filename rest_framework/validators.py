@@ -61,10 +61,9 @@ class UniqueValidator(object):
             raise ValidationError(self.message)
 
     def __repr__(self):
-        return unicode_to_repr('<%s(queryset=%s)>' % (
-            self.__class__.__name__,
-            smart_repr(self.queryset)
-        ))
+        return unicode_to_repr(
+            f'<{self.__class__.__name__}(queryset={smart_repr(self.queryset)})>'
+        )
 
 
 class UniqueTogetherValidator(object):
@@ -98,12 +97,13 @@ class UniqueTogetherValidator(object):
         if self.instance is not None:
             return
 
-        missing = dict([
-            (field_name, self.missing_message)
-            for field_name in self.fields
-            if field_name not in attrs
-        ])
-        if missing:
+        if missing := dict(
+            [
+                (field_name, self.missing_message)
+                for field_name in self.fields
+                if field_name not in attrs
+            ]
+        ):
             raise ValidationError(missing)
 
     def filter_queryset(self, attrs, queryset):
@@ -148,11 +148,9 @@ class UniqueTogetherValidator(object):
             raise ValidationError(self.message.format(field_names=field_names))
 
     def __repr__(self):
-        return unicode_to_repr('<%s(queryset=%s, fields=%s)>' % (
-            self.__class__.__name__,
-            smart_repr(self.queryset),
-            smart_repr(self.fields)
-        ))
+        return unicode_to_repr(
+            f'<{self.__class__.__name__}(queryset={smart_repr(self.queryset)}, fields={smart_repr(self.fields)})>'
+        )
 
 
 class BaseUniqueForValidator(object):
@@ -182,12 +180,13 @@ class BaseUniqueForValidator(object):
         The `UniqueFor<Range>Validator` classes always force an implied
         'required' state on the fields they are applied to.
         """
-        missing = dict([
-            (field_name, self.missing_message)
-            for field_name in [self.field, self.date_field]
-            if field_name not in attrs
-        ])
-        if missing:
+        if missing := dict(
+            [
+                (field_name, self.missing_message)
+                for field_name in [self.field, self.date_field]
+                if field_name not in attrs
+            ]
+        ):
             raise ValidationError(missing)
 
     def filter_queryset(self, attrs, queryset):
@@ -212,12 +211,9 @@ class BaseUniqueForValidator(object):
             raise ValidationError({self.field: message})
 
     def __repr__(self):
-        return unicode_to_repr('<%s(queryset=%s, field=%s, date_field=%s)>' % (
-            self.__class__.__name__,
-            smart_repr(self.queryset),
-            smart_repr(self.field),
-            smart_repr(self.date_field)
-        ))
+        return unicode_to_repr(
+            f'<{self.__class__.__name__}(queryset={smart_repr(self.queryset)}, field={smart_repr(self.field)}, date_field={smart_repr(self.date_field)})>'
+        )
 
 
 class UniqueForDateValidator(BaseUniqueForValidator):
@@ -227,11 +223,12 @@ class UniqueForDateValidator(BaseUniqueForValidator):
         value = attrs[self.field]
         date = attrs[self.date_field]
 
-        filter_kwargs = {}
-        filter_kwargs[self.field_name] = value
-        filter_kwargs['%s__day' % self.date_field_name] = date.day
-        filter_kwargs['%s__month' % self.date_field_name] = date.month
-        filter_kwargs['%s__year' % self.date_field_name] = date.year
+        filter_kwargs = {
+            self.field_name: value,
+            f'{self.date_field_name}__day': date.day,
+            f'{self.date_field_name}__month': date.month,
+            f'{self.date_field_name}__year': date.year,
+        }
         return queryset.filter(**filter_kwargs)
 
 
@@ -242,9 +239,10 @@ class UniqueForMonthValidator(BaseUniqueForValidator):
         value = attrs[self.field]
         date = attrs[self.date_field]
 
-        filter_kwargs = {}
-        filter_kwargs[self.field_name] = value
-        filter_kwargs['%s__month' % self.date_field_name] = date.month
+        filter_kwargs = {
+            self.field_name: value,
+            f'{self.date_field_name}__month': date.month,
+        }
         return queryset.filter(**filter_kwargs)
 
 
@@ -255,7 +253,8 @@ class UniqueForYearValidator(BaseUniqueForValidator):
         value = attrs[self.field]
         date = attrs[self.date_field]
 
-        filter_kwargs = {}
-        filter_kwargs[self.field_name] = value
-        filter_kwargs['%s__year' % self.date_field_name] = date.year
+        filter_kwargs = {
+            self.field_name: value,
+            f'{self.date_field_name}__year': date.year,
+        }
         return queryset.filter(**filter_kwargs)

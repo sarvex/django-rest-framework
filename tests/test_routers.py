@@ -373,10 +373,7 @@ class TestDynamicListAndDetailRouter(TestCase):
                 self.assertEqual(route.url,
                                  '^{{prefix}}/{{lookup}}/{0}{{trailing_slash}}$'.format(url_path))
             # check method to function mapping
-            if method_name.endswith('_post'):
-                method_map = 'post'
-            else:
-                method_map = 'get'
+            method_map = 'post' if method_name.endswith('_post') else 'get'
             self.assertEqual(route.mapping[method_map], method_name)
 
     def test_list_and_detail_route_decorators(self):
